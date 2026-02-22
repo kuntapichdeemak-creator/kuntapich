@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Play, Pause, X, Music, RotateCcw, Rewind, FastForward } from 'lucide-react';
+import { Upload, Play, Pause, X, Music, RotateCcw, Rewind, FastForward, Link as LinkIcon, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const NarrationPlayer = () => {
@@ -8,8 +8,22 @@ export const NarrationPlayer = () => {
   const [fileName, setFileName] = useState<string>("");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [inputType, setInputType] = useState<'file' | 'url' | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load saved URL from localStorage on mount
+  useEffect(() => {
+    const savedUrl = localStorage.getItem('narration_url');
+    const savedName = localStorage.getItem('narration_name');
+    if (savedUrl && savedName) {
+      setAudioSrc(savedUrl);
+      setFileName(savedName);
+      setInputType('url');
+    }
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -18,6 +32,24 @@ export const NarrationPlayer = () => {
       setAudioSrc(url);
       setFileName(file.name);
       setIsPlaying(true);
+      setInputType('file');
+      // Clear saved URL if switching to file
+      localStorage.removeItem('narration_url');
+      localStorage.removeItem('narration_name');
+    }
+  };
+
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (urlInput.trim()) {
+      setAudioSrc(urlInput);
+      setFileName("External Audio");
+      setIsPlaying(true);
+      setInputType('url');
+      // Save to localStorage
+      localStorage.setItem('narration_url', urlInput);
+      localStorage.setItem('narration_name', "External Audio");
+      setUrlInput("");
     }
   };
 
@@ -69,9 +101,11 @@ export const NarrationPlayer = () => {
   };
 
   useEffect(() => {
-    if (audioSrc && audioRef.current) {
-        audioRef.current.play().catch(e => console.log("Autoplay prevented", e));
-        setIsPlaying(true);
+    if (audioSrc && audioRef.current && isPlaying) {
+        audioRef.current.play().catch(e => {
+            console.log("Autoplay prevented", e);
+            setIsPlaying(false);
+        });
     }
   }, [audioSrc]);
 
@@ -82,7 +116,7 @@ export const NarrationPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
       <input
         type="file"
         ref={fileInputRef}
@@ -102,18 +136,54 @@ export const NarrationPlayer = () => {
 
       <AnimatePresence mode="wait">
         {!audioSrc ? (
-          <motion.button
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-3 px-5 py-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-200 transition-all group cursor-pointer"
+            className="flex flex-col items-end gap-2"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
-              <Upload size={16} />
+            {inputType === 'url_input' ? (
+               <form onSubmit={handleUrlSubmit} className="flex items-center gap-2 bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg border border-slate-200">
+                 <input 
+                    type="url" 
+                    placeholder="Paste audio URL..." 
+                    className="pl-4 pr-2 py-1 bg-transparent border-none outline-none text-sm w-48 text-slate-700 placeholder:text-slate-400"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    autoFocus
+                 />
+                 <button type="submit" className="p-2 bg-cyan-500 text-white rounded-full hover:bg-cyan-600 transition-colors">
+                   <Play size={14} fill="currentColor" />
+                 </button>
+                 <button type="button" onClick={() => setInputType(null)} className="p-2 text-slate-400 hover:text-slate-600">
+                   <X size={14} />
+                 </button>
+               </form>
+            ) : (
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setInputType('url_input')}
+                        className="flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-200 transition-all cursor-pointer"
+                        title="Add from URL (Persistent)"
+                    >
+                        <LinkIcon size={16} />
+                        <span className="font-medium text-sm">URL</span>
+                    </button>
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-3 px-5 py-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-200 transition-all group cursor-pointer"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
+                        <Upload size={16} />
+                        </div>
+                        <span className="font-medium text-sm pr-2">Add File</span>
+                    </button>
+                </div>
+            )}
+            <div className="bg-slate-800/80 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm">
+                Tip: Use URL for Vercel deployment
             </div>
-            <span className="font-medium text-sm pr-2">Add Narration</span>
-          </motion.button>
+          </motion.div>
         ) : (
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -123,11 +193,13 @@ export const NarrationPlayer = () => {
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
-                  <Music size={16} />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${inputType === 'file' ? 'bg-amber-100 text-amber-600' : 'bg-cyan-100 text-cyan-600'}`}>
+                  {inputType === 'file' ? <Upload size={16} /> : <LinkIcon size={16} />}
                 </div>
                 <div className="flex flex-col">
-                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Narration</span>
+                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+                     Narration {inputType === 'file' && <span className="text-amber-500 flex items-center gap-0.5 ml-1" title="Local file only (won't work on other devices)"><AlertCircle size={8} /> Local</span>}
+                   </span>
                    <span className="text-xs font-medium text-slate-700 truncate max-w-[180px]">
                      {fileName}
                    </span>
@@ -138,6 +210,9 @@ export const NarrationPlayer = () => {
                     setAudioSrc(null);
                     setIsPlaying(false);
                     setFileName("");
+                    setInputType(null);
+                    localStorage.removeItem('narration_url');
+                    localStorage.removeItem('narration_name');
                 }}
                 className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
               >
@@ -153,7 +228,7 @@ export const NarrationPlayer = () => {
                 max={duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                className={`flex-1 h-1 rounded-lg appearance-none cursor-pointer ${inputType === 'file' ? 'bg-slate-200 accent-amber-500' : 'bg-slate-200 accent-cyan-500'}`}
               />
               <span className="text-[10px] font-mono text-slate-400 w-8">{formatTime(duration)}</span>
             </div>
@@ -171,7 +246,7 @@ export const NarrationPlayer = () => {
                 onClick={togglePlay}
                 className={`w-10 h-10 flex items-center justify-center rounded-full transition-all shadow-sm cursor-pointer ${
                   isPlaying 
-                    ? 'bg-cyan-500 text-white shadow-cyan-200 hover:bg-cyan-600' 
+                    ? (inputType === 'file' ? 'bg-amber-500 text-white shadow-amber-200 hover:bg-amber-600' : 'bg-cyan-500 text-white shadow-cyan-200 hover:bg-cyan-600')
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
