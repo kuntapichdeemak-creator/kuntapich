@@ -38,6 +38,9 @@ export default function App() {
 
   return (
     <div className="w-full h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 overflow-hidden">
+      <audio autoPlay>
+        <source src="/audio/voiceover.mp3" type="audio/mpeg" />
+      </audio>
       
       {/* Sidebar Navigation */}
       <div className="w-full md:w-20 bg-white border-r border-slate-200 flex md:flex-col justify-between items-center py-4 md:py-8 px-4 z-50 shadow-sm shrink-0">
