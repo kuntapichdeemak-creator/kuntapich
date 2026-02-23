@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ThermometerSnowflake, ShieldCheck } from 'lucide-react';
+import { ThermometerSnowflake, ShieldCheck, Snowflake } from 'lucide-react';
 import { SectionTitle } from './Shared';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
@@ -145,21 +145,49 @@ const MacroView = () => {
           {/* Step 3: Freeze - Ice Wall Growth */}
           <AnimatePresence>
             {step >= 3 && step < 5 && (
-              <div className="absolute inset-0 flex justify-center items-start pt-[15%] z-0 gap-8 px-12 pointer-events-none">
+              <motion.div 
+                key="ice-wall-container"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2 }}
+                className="absolute inset-0 flex justify-center items-start pt-[15%] z-0 gap-8 px-12 pointer-events-none"
+              >
                 {[...Array(6)].map((_, i) => (
-                  <motion.div
-                    key={`ice-${i}`}
-                    className="w-2 bg-cyan-400/30 blur-xl rounded-full absolute top-0"
-                    initial={{ height: '70%', width: '20px', opacity: 0 }}
-                    animate={{ 
-                      width: step >= 3 ? '120px' : '20px', 
-                      opacity: 1,
-                      backgroundColor: step === 3 ? 'rgba(34, 211, 238, 0.4)' : 'rgba(34, 211, 238, 0.6)'
-                    }}
-                    transition={{ duration: 2 }}
-                  />
+                  <div key={`ice-wrapper-${i}`} className="w-2 h-[70%] relative flex justify-center">
+                    <motion.div
+                      key={`ice-${i}`}
+                      className="absolute top-0 bg-cyan-200/40 backdrop-blur-sm rounded-lg border-x border-cyan-300/20"
+                      initial={{ width: '10px', opacity: 0 }}
+                      animate={{ 
+                        width: step >= 3 ? '50px' : '10px', 
+                        opacity: 1,
+                        height: '100%'
+                      }}
+                      transition={{ duration: 2.5, ease: "easeInOut" }}
+                    >
+                        {/* Frost Texture Pattern */}
+                        <div className="w-full h-full opacity-30" 
+                             style={{ 
+                                 backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', 
+                                 backgroundSize: '8px 8px' 
+                             }} 
+                        />
+                    </motion.div>
+                  </div>
                 ))}
-              </div>
+                
+                {/* Frozen Wall Label */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: 2 }}
+                    className="absolute top-[40%] bg-cyan-900/80 text-cyan-100 px-3 py-1 rounded-full text-xs font-mono backdrop-blur-md border border-cyan-500/30"
+                >
+                    FROZEN SOIL WALL
+                </motion.div>
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -176,6 +204,39 @@ const MacroView = () => {
                   <span className="text-slate-600 font-mono text-xs">TUNNEL VOID</span>
                 </div>
               </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Step 3: Active Freezing Particles */}
+          <AnimatePresence>
+            {step === 3 && (
+              <div className="absolute inset-0 pointer-events-none z-20">
+                {[...Array(12)].map((_, i) => (
+                  <motion.div
+                    key={`macro-snow-${i}`}
+                    className="absolute text-cyan-100/60"
+                    initial={{ 
+                      opacity: 0, 
+                      scale: 0,
+                      left: `${Math.random() * 80 + 10}%`,
+                      top: `${Math.random() * 60 + 20}%`
+                    }}
+                    animate={{ 
+                      opacity: [0, 1, 0],
+                      scale: [0, 1.2, 0.5],
+                      rotate: Math.random() * 360
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Snowflake size={Math.random() * 20 + 10} />
+                  </motion.div>
+                ))}
+              </div>
             )}
           </AnimatePresence>
 

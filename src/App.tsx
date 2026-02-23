@@ -14,7 +14,6 @@ import MacroView from './components/MacroView';
 import DataView from './components/DataView';
 import TeamView from './components/TeamView';
 import { useSoundEffects } from './hooks/useSoundEffects';
-import { NarrationPlayer } from './components/NarrationPlayer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(0);
@@ -72,7 +71,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <div className="flex-1 relative overflow-hidden">
-        <NarrationPlayer />
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

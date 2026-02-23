@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ThermometerSnowflake } from 'lucide-react';
+import { ThermometerSnowflake, Snowflake } from 'lucide-react';
 import { SectionTitle } from './Shared';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
@@ -106,22 +106,50 @@ const MicroView = () => {
         {/* Ice Lattice Overlay */}
         <AnimatePresence>
           {frozen && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1 }}
-              className="absolute inset-0 z-0 pointer-events-none"
-            >
-              <svg className="w-full h-full opacity-30">
-                <pattern id="ice-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M0 40 L40 0" stroke="#06b6d4" strokeWidth="1" />
-                  <path d="M0 0 L40 40" stroke="#06b6d4" strokeWidth="1" />
-                </pattern>
-                <rect width="100%" height="100%" fill="url(#ice-grid)" />
-              </svg>
-              <div className="absolute inset-0 bg-cyan-500/10 mix-blend-overlay" />
-            </motion.div>
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2 }}
+                className="absolute inset-0 z-0 pointer-events-none"
+              >
+                <svg className="w-full h-full opacity-30">
+                  <pattern id="ice-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M0 40 L40 0" stroke="#06b6d4" strokeWidth="1" />
+                    <path d="M0 0 L40 40" stroke="#06b6d4" strokeWidth="1" />
+                  </pattern>
+                  <rect width="100%" height="100%" fill="url(#ice-grid)" />
+                </svg>
+                <div className="absolute inset-0 bg-cyan-500/10 mix-blend-overlay" />
+              </motion.div>
+
+              {/* Dynamic Ice Crystals */}
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={`crystal-${i}`}
+                  className="absolute z-20 text-cyan-200/60 pointer-events-none"
+                  style={{
+                    top: `${Math.random() * 80 + 10}%`,
+                    left: `${Math.random() * 80 + 10}%`,
+                  }}
+                  initial={{ scale: 0, opacity: 0, rotate: Math.random() * 360 }}
+                  animate={{ 
+                    scale: [0, 1.5, 1.2], 
+                    opacity: [0, 0.8, 0.6],
+                    rotate: Math.random() * 360 + 45
+                  }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ 
+                    duration: 0.8, 
+                    delay: i * 0.1, // Staggered appearance
+                    ease: "easeOut"
+                  }}
+                >
+                  <Snowflake size={Math.random() * 40 + 40} />
+                </motion.div>
+              ))}
+            </>
           )}
         </AnimatePresence>
       </div>
