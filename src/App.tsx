@@ -17,6 +17,8 @@ import { useSoundEffects } from './hooks/useSoundEffects';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
   const { playClick, playHover } = useSoundEffects();
   
   const tabs = [
@@ -36,11 +38,41 @@ export default function App() {
     }
   };
 
+  const handleStart = () => {
+    setHasStarted(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(error => {
+        console.error("Audio playback failed:", error);
+      });
+    }
+  };
+
   return (
-    <div className="w-full h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 overflow-hidden">
-      <audio autoPlay>
-        <source src="/audio/voiceover.mp3" type="audio/mpeg" />
+    <div className="w-full h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 overflow-hidden relative">
+      <audio ref={audioRef} loop>
+        <source src="/audio/voiceover.m4a" type="audio/mp4" />
       </audio>
+
+      {/* Start Overlay */}
+      <AnimatePresence>
+        {!hasStarted && (
+          <motion.div 
+            className="absolute inset-0 z-[100] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStart}
+              className="px-8 py-4 bg-cyan-500 text-white text-xl font-bold rounded-2xl shadow-lg shadow-cyan-500/20 hover:bg-cyan-400 transition-colors"
+            >
+              Start Experience
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Sidebar Navigation */}
       <div className="w-full md:w-20 bg-white border-r border-slate-200 flex md:flex-col justify-between items-center py-4 md:py-8 px-4 z-50 shadow-sm shrink-0">
